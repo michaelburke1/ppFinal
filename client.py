@@ -3,8 +3,25 @@ from twisted.internet.protocol import Protocol
 from twisted.internet import reactor
 from twisted.internet.defer import DeferredQueue
 
+import pygame
+from pygame.locals import *
+from pygame.compat import geterror
+
 commandPort = 9001
 dataPort    = 9002
+
+class meee:
+    def __init__(self):
+        pygame.init()
+        self.size = self.width, self.height = 640, 420
+        self.black = 0, 0, 0
+        self.screen = pygame.display.set_mode(self.size)
+
+    def refresh(self, data):
+        self.screen.fill(self.black)
+        pygame.display.flip()
+
+        print("data recieved from server, updating")
 
 class commandFactory(ClientFactory):
     def __init__(self):
@@ -38,12 +55,13 @@ class commandConnection(Protocol):
 class dataConnection(Protocol):
     def __init__(self, parent):
         self.connection = parent
+        self.meow = meee()
 
     def connectionMade(self):
         print("data connection established...")
 
     def dataReceived(self, data):
-        print("data from server:" + str(data))
+        self.meow.refresh(data)
 
 ################################################################################
 
