@@ -1,5 +1,6 @@
 from twisted.internet.protocol import ClientFactory
 from twisted.internet.protocol import Protocol
+from twisted.internet.task import LoopingCall
 from twisted.internet import reactor
 from twisted.internet.defer import DeferredQueue
 
@@ -14,13 +15,12 @@ class GameSpace:
         self.connection = dataPipe
 
     def main(self):
-        pygame.init()
-        self.clock = pygame.time.Clock()
+        gameLoop = LoopingCall(self.loop)
+        gameLoop.start(0.5)
 
-        while True:
-            self.clock.tick(1)
-            print("in loop")
-            self.connection.transport.write("meow")
+    def loop(self):
+        print("looping")
+        self.connection.transport.write("meow")
 
 class dataFactory(ClientFactory):
     def __init__(self):
@@ -45,7 +45,7 @@ class dataConnection(Protocol):
 
     def connectionMade(self):
         print("data connection established...")
-        self.transport.write("hello")
+        # self.transport.write("hello")
         gs = GameSpace(self)
         gs.main()
 
