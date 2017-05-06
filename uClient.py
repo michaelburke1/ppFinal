@@ -12,7 +12,6 @@ from pygame.compat import geterror
 
 serverPort = 9001
 
-uID = 0
 
 ################################################################################
 def load_image(name):
@@ -35,6 +34,8 @@ class userSpace:
         self.players = []
         self.projectiles = []
 
+        self.uID = 0
+
         self.player = Sprite('p')
         self.enemy = Sprite('e')
         self.laser = Sprite('l')
@@ -50,6 +51,10 @@ class userSpace:
         self.pRocks = ""
 
         self.fired = False
+
+    def setID(self, uid):
+        self.uID = uid
+        print("client id is: " + str(uid))
 
     def main(self):
         pygame.key.set_repeat(1, 60)
@@ -93,7 +98,7 @@ class userSpace:
         else:
             self.pLaser = "False"
 
-        self.info = str(uID) + ";" + self.pYou + ";" + self.pMouse + ";" +self.pLaser
+        self.info = str(self.uID) + ";" + self.pYou + ";" + self.pMouse + ";" +self.pLaser
         return self.info
 
     def parseData(self, dataString):
@@ -105,7 +110,7 @@ class userSpace:
             playerData = player.split(':')
             if len(playerData) == 5:
                 temp = []
-                if int(playerData[0]) == uID:
+                if int(playerData[0]) == self.uID:
                     temp.append('p')
                 else:
                     temp.append('e')
@@ -211,13 +216,15 @@ class dataConnection(Protocol):
 
     def connectionMade(self):
         print("data connection established...")
-        self.space.main()
 
     def dataReceived(self, data):
         # print(data)
-        if data[0] == 'P':
+        if data[0] == 'p':
             temp = data.split(':')
-            uID = int(temp[1])
+            uID = int(temp[1][0])
+            print('got my uid')
+            self.space.setID(uID)
+            self.space.main()
         self.space.updateDisplay(data)
 
     def sendData(self, data):

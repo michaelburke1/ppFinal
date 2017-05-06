@@ -48,6 +48,7 @@ class GameSpace:
         # for items in event loop
         # pop item -> parse item -> apply action
         while not self.eventQueue.empty():
+            print("player event")
             laser = self.parseEvent(self.eventQueue.get())
             if laser != None:
                 self.projectiles.append(laser)
@@ -100,7 +101,7 @@ class GameSpace:
             objectString += projectileString
 
         # send string to every client
-        print(objectString)
+        # print(objectString)
         for client, protocol in self.clients.items():
             if protocol != self:
                 protocol.transport.write(objectString.encode('utf-8'))
@@ -110,6 +111,7 @@ class GameSpace:
 
     def parseEvent(self, eventString):
         data = eventString.split(';')
+        print(data)
         pId = int(data[0])
         pPos = data[1].split(',')
         mPos = data[2].split(',')
@@ -215,8 +217,7 @@ class serverFactory(ClientFactory):
         print 'connection initiated...'
 
     def buildProtocol(self, addr):
-        self.pID += 1
-        return dataConnection(self.clients, self, self.pID)
+        return dataConnection(self.clients, self)
 
     def clientConnectionLost(self, connector, reason):
         print 'connection lost: ', reason
@@ -226,13 +227,15 @@ class serverFactory(ClientFactory):
 
 class dataConnection(Protocol):
 
-    def __init__(self, users, parent, pID):
+    def __init__(self, users, parent):
         self.users = users
-        self.pID = pID
+        self.pID = 0
         self.parent = parent
 
     def connectionMade(self):
         print("client connection established...")
+        self.parent.pID += 1
+        self.pID = self.parent.pID
         self.transport.write('player ID:' + str(self.pID))
         self.users[self.pID] = self
         self.parent.gs.addClient(self.users, self.pID)
