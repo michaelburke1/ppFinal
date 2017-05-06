@@ -4,7 +4,7 @@ from twisted.internet.task import LoopingCall
 from twisted.internet import reactor
 from twisted.internet.defer import DeferredQueue
 
-import pygame
+import pygame, math
 from pygame.locals import *
 from pygame.compat import geterror
 
@@ -17,6 +17,16 @@ dataPort    = 9002
 
 ###############################################################################
 
+def load_image(name):
+    try:
+        image = pygame.image.load(name)
+    except:
+        print("image loading failure")
+
+    # image = image.convert()
+    image.convert_alpha
+    return image, image.get_rect()
+
 class GameSpace:
     def __init__(self, dataPipe):
         self.connection = dataPipe
@@ -25,8 +35,10 @@ class GameSpace:
         self.projectiles = []
 
     def main(self):
+        myP = Projectile(0, 0, 1, 1, 'a')
+        self.projectiles.append(myP)
         gameLoop = LoopingCall(self.loop)
-        gameLoop.start(5)
+        gameLoop.start(1)
 
     def loop(self):
         print("performing loop iteration")
@@ -52,13 +64,13 @@ class GameSpace:
         # get object coords -> concat to one big string
         objectString = ""
         for player in self.players:
-            playerString = player.pId + '.' + player.X + ':' + player.Y + ';'
+            playerString = player.pId + ':' + str(player.X) + ':' + str(player.Y) + ';'
             objectString += playerString
 
         objectString += '#'
 
         for projectile in self.projectiles:
-            projectileString = projectile.pType + '.' + projectile.pType + ':' + projectile.pType + ';'
+            projectileString = projectile.pType + ':' + str(projectile.rect.x) + ':' + str(projectile.rect.y) + ';'
             objectString += projectileString
 
         # send string to every client
@@ -112,7 +124,7 @@ class Projectile(pygame.sprite.Sprite):
 
         pygame.sprite.Sprite.__init__(self)
 
-        if pType == "asteroid":
+        if pType == "a":
             iName = 'asteroid.png'
             self.speed = randint(8, 15)
             self.pType = 'a'
@@ -123,21 +135,21 @@ class Projectile(pygame.sprite.Sprite):
 
         self.image, self.rect = load_image(iName)
 
-        self.rect.x = self.playerX + 75
-        self.rect.y = self.playerY + 75
+        self.rect.x = X + 75
+        self.rect.y = Y + 75
 
-        distance = [targetX - playerX, targetY - playerY]
+        distance = [targetX - X, targetY - Y]
         norm = math.sqrt(distance[0] ** 2 + distance[1] ** 2)
         self.direction = [distance[0] / norm, distance[1] / norm]
 
-    def update():
+    def update(self):
         self.rect.x += (self.direction[0] * self.speed)
         self.rect.y += (self.direction[1] * self.speed)
 
     def checkCollision(self, other):
         if pygame.sprite.collide_rect(self, other):
-            self.X = -1
-            self.Y = -1
+            self.rect.x = -1
+            self.rect.y = -1
 
             other.X = -1
             other.Y = -1

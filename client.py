@@ -8,10 +8,21 @@ import pygame
 from pygame.locals import *
 from pygame.compat import geterror
 
+###############################################################################
+
 commandPort = 9001
 dataPort    = 9002
 
 ID = 0
+
+def load_image(name):
+    try:
+        image = pygame.image.load(name)
+    except:
+        print("image loading error")
+
+    image.convert_alpha
+    return image, image.get_rect()
 
 class userSpace:
     def __init__(self, connection):
@@ -21,81 +32,116 @@ class userSpace:
         self.black = 0, 0, 0
         self.screen = pygame.display.set_mode(self.size)
 
-        self.you = Player()
-        self.opp = Player()
-        self.laser = projectile(LASER)
-        self.rock = projectile(ROCK)
-        self.info = ""
-        self.pYou = ""
-        self.pMouse = ""
-        self.pLaser = ""
-        self.pRocks = ""
+        self.players = []
+        self.projectiles = []
 
-        self.fired = False
+        self.genericAsteroid = ProjectileSprite('a')
+        # self.you = Player()
+        # self.opp = Player()
+        # self.laser = projectile(LASER)
+        # self.rock = projectile(ROCK)
+        # self.info = ""
+        # self.pYou = ""
+        # self.pMouse = ""
+        # self.pLaser = ""
+        # self.pRocks = ""
 
-    def main(self):
-        gameLoop = LoopingCall(self.loop)
-        gameLoop.start(.5)
+        # self.fired = False
 
-    def loop(self):
-        if event.type == KEYDOWN:
-            self.you.move(event.key)
-            xMouse, yMouse = pygame.mouse.get_pos()
-            self.conn.senData(self.sendInfo(xMouse,yMouse))
-                    
-        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-            xMouse, yMouse = pygame.mouse.get_pos()
-            self.fired = true
-            self.conn.sendData(self.sendInfo(xMouse, yMouse))
-            self.fired = false
+    # def main(self):
+        # gameLoop = LoopingCall(self.loop)
+        # gameLoop.start(.5)
 
-    def sendInfo(self, x, y):
-        self.pYou = str(self.you.playerX) + "," + str(self.you.playerY)
+    # def loop(self):
+    #     if event.type == KEYDOWN:
+    #         self.you.move(event.key)
+    #         xMouse, yMouse = pygame.mouse.get_pos()
+    #         self.conn.senData(self.sendInfo(xMouse,yMouse))
 
-        #xMouse, yMouse = pygame.mouse.get_pos()
-        self.pMouse = str(x) + "," + str(y)
+    #     if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+    #         xMouse, yMouse = pygame.mouse.get_pos()
+    #         self.fired = true
+    #         self.conn.sendData(self.sendInfo(xMouse, yMouse))
+    #         self.fired = false
 
-        if self.fired:
-            self.pLaser = "True"
-        else:
-            self.pLaser = "False"
+    # def sendInfo(self, x, y):
+    #     self.pYou = str(self.you.playerX) + "," + str(self.you.playerY)
 
-        self.info = str(ID) + ";" + self.pYou + ";" + self.pMouse + ";" +self.pLaser
-        return self.info
+    #     #xMouse, yMouse = pygame.mouse.get_pos()
+    #     self.pMouse = str(x) + "," + str(y)
 
-    def refresh(self, eventString):
-        data = eventString.split("#")
-        playerSplit = data[0]
-        projectileSplit = data[1]
-        players = playerSplit.split[";"]
-        projectiles = projectileSplit.split[";"]
+    #     if self.fired:
+    #         self.pLaser = "True"
+    #     else:
+    #         self.pLaser = "False"
 
-        for player in players:
-            curr = player.split[":"]
-            if curr[0] == str(ID):
-                self.you.playerX = int(curr[1])
-                self.you.playerY = int(curr[2])
-            else:
-                self.opp.playerX = int(curr[1])
-                self.opp.playerY = int(curr[2])
+    #     self.info = str(ID) + ";" + self.pYou + ";" + self.pMouse + ";" +self.pLaser
+    #     return self.info
 
+    def parseData(self, dataString):
+        data = dataString.split("#")
+        players = data[0]
+        projectiles = data[1]
 
-        for player in players:
-            curr = player.split[":"]
-            if curr[0] == str(ID):
-                self.you.playerX = int(curr[1])
-                self.you.playerY = int(curr[2])
-            else:
-                self.opp.playerX = int(curr[1])
-                self.opp.playerY = int(curr[2])
+        projectiles = projectiles.split(';')
+        print(projectiles)
+        for projectile in projectiles:
+            data = projectile.split(':')
+            if len(data) == 3:
+                temp = []
+                temp.append(data[0])
+                temp.append(int(data[1]))
+                temp.append(int(data[2]))
+                self.projectiles.append(temp)
+
+    def updateDisplay(self, eventString):
+        self.parseData(eventString)
 
         self.screen.fill(self.black)
-        pygame.display.flip()
 
+        for projectile in self.projectiles:
+            if projectile[0] == 'a':
+                self.genericAsteroid.setPosition(projectile[1], projectile[2])
+                self.screen.blit(self.genericAsteroid.image, self.genericAsteroid.rect)
+
+        pygame.display.flip()
+        self.projectiles = []
         print("data recieved from server, updating")
 
-######################################################################################
+################################################################################
+class Player(pygame.sprite.Sprite):
+    def __init__(self):
+        pygame.sprite.Sprite.__init__(self)
 
+        self.playerX = 0
+        self.playerY = 0
+
+    def move(self, k):
+        if k == pygame.K_LEFT:
+            self.playerX = self.playerX - 5
+        elif k == pygame.K_RIGHT:
+            self.playerX = self.playerX + 5
+        elif k == pygame.K_UP:
+            self.playerY = self.playerY - 5
+        elif k == pygame.K_DOWN:
+            self.playerY = self.playerY + 5
+
+class ProjectileSprite(pygame.sprite.Sprite):
+    def __init__(self, pType):
+        pygame.sprite.Sprite.__init__(self)
+
+        if pType == 'a':
+            iName = 'asteroid.png'
+        else:
+            iName = 'laser.png'
+
+        self.image, self.rect = load_image(iName)
+
+    def setPosition(self, X, Y):
+        self.rect.x = X
+        self.rect.y = Y
+
+###############################################################################
 
 class commandFactory(ClientFactory):
     def __init__(self):
@@ -135,35 +181,11 @@ class dataConnection(Protocol):
         print("data connection established...")
 
     def dataReceived(self, data):
-        self.space.refresh(data)
+        print(data)
+        self.space.updateDisplay(data)
 
     def sendData(self, data):
         self.transport.write(data)
-
-#########################################################################################
-
-class Player(pygame.sprite.Sprite):
-    def __init__(self):
-        pygame.sprite.Sprite.__init__(self)
-
-        self.playerX = 0
-        self.playerY = 0
-
-    def move(self, k):
-        if k == pygame.K_LEFT:
-            self.playerX = self.playerX - 5
-        elif k == pygame.K_RIGHT:
-            self.playerX = self.playerX + 5
-        elif k == pygame.K_UP:
-            self.playerY = self.playerY - 5
-        elif k == pygame.K_DOWN:
-            self.playerY = self.playerY + 5
-
-class Laser(pygame.sprite.Sprite):
-    def __init__(self):
-
-        pygame.sprite.Sprite.__init__(self)
-
 
 ################################################################################
 
