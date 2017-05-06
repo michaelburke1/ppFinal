@@ -35,13 +35,14 @@ class GameSpace:
         self.projectiles = []
 
     def main(self):
-        myP = Projectile(0, 0, 1, 1, 'a')
-        self.projectiles.append(myP)
+        # myP = Projectile(0, 0, 1, 1, 'l')
+        # self.projectiles.append(myP)
+
         gameLoop = LoopingCall(self.loop)
-        gameLoop.start(1)
+        gameLoop.start(1/float(30))
 
     def loop(self):
-        print("performing loop iteration")
+        # print("performing loop iteration")
 
         # for items in event loop
         # pop item -> parse item -> apply action
@@ -51,8 +52,8 @@ class GameSpace:
                 self.projectiles.append[laser]
 
         for projectile in self.projectiles:
-            if projectile.rect.x > 700 or projectile.rect.y > 700:
-                del self.projectiles[projectile]
+            if projectile.rect.x > 650 or projectile.rect.y > 850 or projectile.rect.x < -50 or projectile.rect.y < -50:
+                self.projectiles.remove(projectile)
             else:
                 projectile.update()
 
@@ -82,8 +83,8 @@ class GameSpace:
     def parseEvent(eventString):
         data = eventString.split(';')
         pId = data[0]
-        pPos = data[1].split(':')
-        mPos = data[2].split(':')
+        pPos = data[1].split(',')
+        mPos = data[2].split(',')
         shoot = bool(data[3])
 
         self.players[pId].updatePos(pPos[0], pPos[1])
@@ -126,11 +127,11 @@ class Projectile(pygame.sprite.Sprite):
 
         if pType == "a":
             iName = 'asteroid.png'
-            self.speed = randint(8, 15)
+            self.speed = randint(1, 7)
             self.pType = 'a'
         else:
             iName = 'laser.png'
-            self.speed = 20
+            self.speed = 10
             self.pType = 'l'
 
         self.image, self.rect = load_image(iName)
@@ -184,7 +185,7 @@ class dataConnection(Protocol):
 
     def dataReceived(self, data):
         print("data from client: ", data)
-        gs.logData(data)
+        # gs.logData(data)
 
 class commandConnection(Protocol):
 
