@@ -4,7 +4,7 @@ from twisted.internet import reactor
 from twisted.internet.defer import DeferredQueue
 from twisted.internet.task import LoopingCall
 
-import pygame
+import pygame, math
 from pygame.locals import *
 from pygame.compat import geterror
 
@@ -52,8 +52,9 @@ class userSpace:
         self.fired = False
 
     def main(self):
+        pygame.key.set_repeat(1, 60)
         gameLoop = LoopingCall(self.loop)
-        gameLoop.start(.5)
+        gameLoop.start(1/float(60))
 
     def loop(self):
         for event in pygame.event.get():
@@ -69,15 +70,18 @@ class userSpace:
                 self.conn.sendData(self.sendInfo(xMouse, yMouse))
                 self.fired = False
 
+            xMouse, yMouse = pygame.mouse.get_pos()
+            self.conn.transport.write(self.sendInfo(xMouse, yMouse))
+
     def movePlayer(self, key):
         if key == pygame.K_LEFT:
-            self.playerX -= 5
+            self.playerX -= 6
         elif key == pygame.K_RIGHT:
-            self.playerX += 5
+            self.playerX += 6
         elif key == pygame.K_UP:
-            self.playerY -= 5
+            self.playerY -= 6
         elif key == pygame.K_DOWN:
-            self.playerY += 5
+            self.playerY += 6
 
     def sendInfo(self, x, y):
         self.pYou = str(self.playerX) + "," + str(self.playerY)
@@ -94,17 +98,33 @@ class userSpace:
 
     def parseData(self, dataString):
         data = dataString.split("#")
-        players = data[0]
-        projectiles = data[1]
 
+        players = data[0]
+        players = players.split(';')
+        for player in players:
+            playerData = player.split(':')
+            if len(playerData) == 5:
+                temp = []
+                if int(playerData[0]) == ID:
+                    temp.append('p')
+                else:
+                    temp.append('e')
+                temp.append(int(playerData[1]))
+                temp.append(int(playerData[2]))
+                temp.append(int(playerData[3]))
+                temp.append(int(playerData[4]))
+                self.players.append(temp)
+
+        projectiles = data[1]
         projectiles = projectiles.split(';')
         for projectile in projectiles:
-            data = projectile.split(':')
-            if len(data) == 3:
+            projData = projectile.split(':')
+            if len(projData) == 4:
                 temp = []
-                temp.append(data[0])
-                temp.append(int(data[1]))
-                temp.append(int(data[2]))
+                temp.append(projData[0])
+                temp.append(int(projData[1]))
+                temp.append(int(projData[2]))
+                temp.append(float(projData[3]))
                 self.projectiles.append(temp)
 
     def updateDisplay(self, eventString):
@@ -118,18 +138,22 @@ class userSpace:
                 self.screen.blit(self.asteroid.image, self.asteroid.rect)
             if projectile[0] == 'l':
                 self.laser.setPosition(projectile[1], projectile[2])
+                self.laser.setRotation(projectile[3])
                 self.screen.blit(self.laser.image, self.laser.rect)
 
         for player in self.players:
-            if projectile[0] == 'p':
-                self.player.setPosition(projectile[1], projectile[2])
+            if player[0] == 'p':
+                self.player.setPosition(player[1], player[2])
+                self.player.setRotation(player[3], player[4])
                 self.screen.blit(self.player.image, self.player.rect)
-            if projectile[0] == 'e':
-                self.enemy.setPosition(projectile[1], projectile[2])
+            if player[0] == 'e':
+                self.enemy.setPosition(player[1], player[2])
+                self.player.setRotation(player[3], player[4])
                 self.screen.blit(self.enemy.image, self.enemy.rect)
 
         pygame.display.flip()
         self.projectiles = []
+        self.players = []
         # print("data recieved from server, updating")
 
 ################################################################################
@@ -142,16 +166,29 @@ class Sprite(pygame.sprite.Sprite):
             self.image, self.rect = load_image('assets/Astroids/astroid.png')
             self.image = pygame.transform.scale(self.image, (75, 75))
         elif sType == 'l':
-            self.image, self.rect = load_image('assets/player.png')
+            self.image, self.rect = load_image('assets/Effects/blueLaser.png')
             self.image = pygame.transform.scale(self.image, (30, 30))
         elif sType == 'p':
             self.image, self.rect = load_image('assets/player.png')
+            self.image = pygame.transform.scale(self.image, (75, 75))
         else:
             self.image, self.rect = load_image('assets/enemy.png')
+            self.image = pygame.transform.scale(self.image, (30, 30))
+
+        self.unrotatedImage = self.image
 
     def setPosition(self, X, Y):
         self.rect.x = X
         self.rect.y = Y
+
+    def setRotation(self, X, Y=None):
+        if Y != None:
+            rotAngle = math.atan2(self.rect.y - Y, X - self.rect.x)
+            rotAngle = math.degrees(rotAngle) - 90
+        else:
+            rotAngle = X
+
+        self.image = pygame.transform.rotate(self.unrotatedImage, rotAngle)
 
 ###############################################################################
 
