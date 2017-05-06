@@ -36,10 +36,6 @@ class userSpace:
         self.projectiles = []
 
         self.genericAsteroid = ProjectileSprite('a')
-        # self.you = Player()
-        # self.opp = Player()
-        # self.laser = projectile(LASER)
-        # self.rock = projectile(ROCK)
         # self.info = ""
         # self.pYou = ""
         # self.pMouse = ""
@@ -65,7 +61,7 @@ class userSpace:
     #         self.fired = false
 
     # def sendInfo(self, x, y):
-    #     self.pYou = str(self.you.playerX) + "," + str(self.you.playerY)
+    #     self.pYou = str(self.players[ID].playerX) + "," + str(self.players[ID].playerY)
 
     #     #xMouse, yMouse = pygame.mouse.get_pos()
     #     self.pMouse = str(x) + "," + str(y)
