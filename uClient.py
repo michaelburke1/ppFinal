@@ -93,7 +93,7 @@ class userSpace:
         else:
             self.pLaser = "False"
 
-        self.info = str(ID) + ";" + self.pYou + ";" + self.pMouse + ";" +self.pLaser
+        self.info = str(uID) + ";" + self.pYou + ";" + self.pMouse + ";" +self.pLaser
         return self.info
 
     def parseData(self, dataString):
@@ -105,7 +105,7 @@ class userSpace:
             playerData = player.split(':')
             if len(playerData) == 5:
                 temp = []
-                if int(playerData[0]) == ID:
+                if int(playerData[0]) == uID:
                     temp.append('p')
                 else:
                     temp.append('e')
@@ -173,7 +173,7 @@ class Sprite(pygame.sprite.Sprite):
             self.image = pygame.transform.scale(self.image, (75, 75))
         else:
             self.image, self.rect = load_image('assets/enemy.png')
-            self.image = pygame.transform.scale(self.image, (30, 30))
+            self.image = pygame.transform.scale(self.image, (75, 75))
 
         self.unrotatedImage = self.image
 
@@ -193,8 +193,8 @@ class Sprite(pygame.sprite.Sprite):
 ###############################################################################
 
 class clientFactory(ClientFactory):
-    def __init__(self, parent):
-        self.connection = dataConnection(parent)
+    def __init__(self):
+        self.connection = dataConnection()
 
     def buildProtocol(self, addr):
         return self.connection
@@ -206,8 +206,7 @@ class clientFactory(ClientFactory):
         print('connection failed: ', reason)
 
 class dataConnection(Protocol):
-    def __init__(self, parent):
-        self.connection = parent
+    def __init__(self):
         self.space = userSpace(self)
 
     def connectionMade(self):
@@ -218,7 +217,7 @@ class dataConnection(Protocol):
         # print(data)
         if data[0] == 'P':
             temp = data.split(':')
-            uID = temp[1]
+            uID = int(temp[1])
         self.space.updateDisplay(data)
 
     def sendData(self, data):
@@ -226,5 +225,5 @@ class dataConnection(Protocol):
 
 ################################################################################
 
-reactor.listenTCP(serverPort, clientFactory())
+reactor.connectTCP('localhost', serverPort, clientFactory())
 reactor.run()

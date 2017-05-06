@@ -4,7 +4,7 @@ from twisted.internet.task import LoopingCall
 from twisted.internet import reactor
 from twisted.internet.defer import DeferredQueue
 
-import pygame, math
+import pygame, math, Queue
 from pygame.locals import *
 from pygame.compat import geterror
 
@@ -13,7 +13,6 @@ from random import randint
 ###############################################################################
 
 connectionPort = 9001
-pID = 0
 
 ###############################################################################
 
@@ -28,27 +27,28 @@ def load_image(name):
 
 class GameSpace:
     def __init__(self):
-        self.eventQueue = []
+        self.eventQueue = Queue.Queue()
         self.players = []
         self.projectiles = []
         self.asteroidCount = 0
-        self.clients = None
+        self.clients = {}
 
-    def addClient(self, clientList):
+    def addClient(self, clientList, pID):
+        print("client joined")
         self.clients = clientList
+        print(self.clients)
+        player = Player(pID, 100, 100, 0, 0)
+        self.players.append(player)
 
     def main(self):
-        # playerOne = Player(0, 100, 100, 0, 0)
-        # self.players.append(playerOne)
-
         gameLoop = LoopingCall(self.loop)
         gameLoop.start(1/float(60))
 
     def loop(self):
         # for items in event loop
         # pop item -> parse item -> apply action
-        for playerAction in self.eventQueue:
-            laser = self.parseEvent(self.eventQueue.pop(0))
+        while not self.eventQueue.empty():
+            laser = self.parseEvent(self.eventQueue.get())
             if laser != None:
                 self.projectiles.append(laser)
 
@@ -100,12 +100,13 @@ class GameSpace:
             objectString += projectileString
 
         # send string to every client
-        for pID, protocol in self.clients.items():
+        print(objectString)
+        for client, protocol in self.clients.items():
             if protocol != self:
                 protocol.transport.write(objectString.encode('utf-8'))
 
     def logData(self, eventString):
-        self.eventQueue.append(eventString)
+        self.eventQueue.put(eventString)
 
     def parseEvent(self, eventString):
         data = eventString.split(';')
@@ -113,13 +114,13 @@ class GameSpace:
         pPos = data[1].split(',')
         mPos = data[2].split(',')
         shoot = data[3]
-        print(shoot)
+        # print(shoot)
 
         self.players[pId].updatePos(int(pPos[0]), int(pPos[1]))
         self.players[pId].updateMouse(int(mPos[0]), int(mPos[1]))
 
         if shoot == 'True0':
-            print("player fired")
+            # print("player fired")
             return self.players[pId].fire(int(mPos[0]), int(mPos[1]))
 
         return None
@@ -204,13 +205,18 @@ class Projectile(pygame.sprite.Sprite):
 class serverFactory(ClientFactory):
     def __init__(self):
         self.clients = {}
+        self.gs = GameSpace()
+        self.gs.main()
+        self.pID = -1
+
         # self.connection = dataConnection()
 
     def startedConnecting(self, connector):
         print 'connection initiated...'
 
     def buildProtocol(self, addr):
-        return dataConnection(self.clients)
+        self.pID += 1
+        return dataConnection(self.clients, self, self.pID)
 
     def clientConnectionLost(self, connector, reason):
         print 'connection lost: ', reason
@@ -220,25 +226,22 @@ class serverFactory(ClientFactory):
 
 class dataConnection(Protocol):
 
-    def __init__(self, users):
+    def __init__(self, users, parent, pID):
         self.users = users
-        self.pID = None
-        self.gs = GameSpace(self)
-        self.gs.main()
+        self.pID = pID
+        self.parent = parent
 
     def connectionMade(self):
         print("client connection established...")
-        self.transport.write('player ID:' + str(pID))
-        self.pID = pID
-        self.users[pID] = self
-        pID += 1
-        gs.addClient(self.users)
+        self.transport.write('player ID:' + str(self.pID))
+        self.users[self.pID] = self
+        self.parent.gs.addClient(self.users, self.pID)
 
     def dataReceived(self, data):
         # print("data from client: ", data)
-        self.gs.logData(data)
+        self.parent.gs.logData(data)
 
 ###############################################################################
 
-reactor.connectTCP("localhost", connectionPort, serverFactory())
+reactor.listenTCP(connectionPort, serverFactory())
 reactor.run()
