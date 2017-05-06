@@ -8,19 +8,141 @@ import pygame
 from pygame.locals import *
 from pygame.compat import geterror
 
+from random import randint
+
+###############################################################################
+
 commandPort = 9001
 dataPort    = 9002
+
+###############################################################################
+
 class GameSpace:
     def __init__(self, dataPipe):
         self.connection = dataPipe
+        self.eventQueue = []
+        self.players = []
+        self.projectiles = []
 
     def main(self):
         gameLoop = LoopingCall(self.loop)
-        gameLoop.start(0.5)
+        gameLoop.start(5)
 
     def loop(self):
-        print("looping")
-        self.connection.transport.write("meow")
+        print("performing loop iteration")
+
+        # for items in event loop
+        # pop item -> parse item -> apply action
+        for playerAction in self.eventQueue:
+            laser = self.parseEvent(eventQueue.pop(0))
+            if laser:
+                self.projectiles.append[laser]
+
+        for projectile in self.projectiles:
+            if projectile.rect.x > 700 or projectile.rect.y > 700:
+                del self.projectiles[projectile]
+            else:
+                projectile.update()
+
+        # for items in game check collisions
+        for objectOne in self.players:
+            for objectTwo in self.projectiles:
+                objectOne.checkCollision(objectTwo)
+
+        # get object coords -> concat to one big string
+        objectString = ""
+        for player in self.players:
+            playerString = player.pId + '.' + player.X + ':' + player.Y + ';'
+            objectString += playerString
+
+        objectString += '#'
+
+        for projectile in self.projectiles:
+            projectileString = projectile.pType + '.' + projectile.pType + ':' + projectile.pType + ';'
+            objectString += projectileString
+
+        # send string to every client
+        self.connection.transport.write(objectString.encode('utf-8'))
+
+    def logData(eventString):
+        self.eventQueue.append(eventString)
+
+    def parseEvent(eventString):
+        data = eventString.split(';')
+        pId = data[0]
+        pPos = data[1].split(':')
+        mPos = data[2].split(':')
+        shoot = bool(data[3])
+
+        self.players[pId].updatePos(pPos[0], pPos[1])
+
+        if shoot:
+            return self.players[pId].fire(mPos[0], mPos[1])
+
+        return None
+
+###############################################################################
+
+class Player(pygame.sprite.Sprite):
+    def __init__(self, pId, X, Y):
+        self.pId = pId
+        self.X = X
+        self.Y = Y
+
+    def updatePos(self, newX, newY):
+        self.X = newX
+        self.Y = newY
+
+    def fire(self, targetX, targetY):
+        newLaser = Projectile(self.X, self.Y, targetX, targetY, 'laser')
+        return newLaser
+
+    def checkCollision(self, other):
+        if pygame.sprite.collide_rect(self, other):
+            self.X = -1
+            self.Y = -1
+
+            other.X = -1
+            other.Y = -1
+
+class Projectile(pygame.sprite.Sprite):
+    def __init__(self, X, Y, targetX, targetY, pType):
+        self.speed = 0
+        self.pType = 'a'
+
+        pygame.sprite.Sprite.__init__(self)
+
+        if pType == "asteroid":
+            iName = 'asteroid.png'
+            self.speed = randint(8, 15)
+            self.pType = 'a'
+        else:
+            iName = 'laser.png'
+            self.speed = 20
+            self.pType = 'l'
+
+        self.image, self.rect = load_image(iName)
+
+        self.rect.x = self.playerX + 75
+        self.rect.y = self.playerY + 75
+
+        distance = [targetX - playerX, targetY - playerY]
+        norm = math.sqrt(distance[0] ** 2 + distance[1] ** 2)
+        self.direction = [distance[0] / norm, distance[1] / norm]
+
+    def update():
+        self.rect.x += (self.direction[0] * self.speed)
+        self.rect.y += (self.direction[1] * self.speed)
+
+    def checkCollision(self, other):
+        if pygame.sprite.collide_rect(self, other):
+            self.X = -1
+            self.Y = -1
+
+            other.X = -1
+            other.Y = -1
+
+###############################################################################
 
 class dataFactory(ClientFactory):
     def __init__(self):
@@ -45,12 +167,12 @@ class dataConnection(Protocol):
 
     def connectionMade(self):
         print("data connection established...")
-        # self.transport.write("hello")
         gs = GameSpace(self)
         gs.main()
 
     def dataReceived(self, data):
         print("data from client: ", data)
+        gs.logData(data)
 
 class commandConnection(Protocol):
 
@@ -77,6 +199,7 @@ class commandFactory(ClientFactory):
     def clientConnectionFailed(self, connector, reason):
         print 'connection failed: ', reason
 
+###############################################################################
 
 reactor.connectTCP("localhost", commandPort, commandFactory())
 reactor.run()
