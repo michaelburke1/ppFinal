@@ -120,17 +120,18 @@ class userSpace:
                 temp.append(int(playerData[4]))
                 self.players.append(temp)
 
-        projectiles = data[1]
-        projectiles = projectiles.split(';')
-        for projectile in projectiles:
-            projData = projectile.split(':')
-            if len(projData) == 4:
-                temp = []
-                temp.append(projData[0])
-                temp.append(int(projData[1]))
-                temp.append(int(projData[2]))
-                temp.append(float(projData[3]))
-                self.projectiles.append(temp)
+        if len(data[1]) > 2:
+            projectiles = data[1]
+            projectiles = projectiles.split(';')
+            for projectile in projectiles:
+                projData = projectile.split(':')
+                if len(projData) == 4:
+                    temp = []
+                    temp.append(projData[0])
+                    temp.append(int(projData[1]))
+                    temp.append(int(projData[2]))
+                    temp.append(float(projData[3]))
+                    self.projectiles.append(temp)
 
     def updateDisplay(self, eventString):
         self.parseData(eventString)
@@ -139,6 +140,7 @@ class userSpace:
 
         for projectile in self.projectiles:
             if projectile[0] == 'a':
+                self.asteroid.setRotation(projectile[2])
                 self.asteroid.setPosition(projectile[1], projectile[2])
                 self.screen.blit(self.asteroid.image, self.asteroid.rect)
             if projectile[0] == 'l':
@@ -153,7 +155,7 @@ class userSpace:
                 self.screen.blit(self.player.image, self.player.rect)
             if player[0] == 'e':
                 self.enemy.setPosition(player[1], player[2])
-                self.player.setRotation(player[3], player[4])
+                self.enemy.setRotation(player[3], player[4])
                 self.screen.blit(self.enemy.image, self.enemy.rect)
 
         pygame.display.flip()
@@ -183,8 +185,8 @@ class Sprite(pygame.sprite.Sprite):
         self.unrotatedImage = self.image
 
     def setPosition(self, X, Y):
-        self.rect.x = X
-        self.rect.y = Y
+        self.rect.centerx = X
+        self.rect.centery = Y
 
     def setRotation(self, X, Y=None):
         if Y != None:
@@ -194,6 +196,7 @@ class Sprite(pygame.sprite.Sprite):
             rotAngle = X
 
         self.image = pygame.transform.rotate(self.unrotatedImage, rotAngle)
+        self.rect = self.image.get_rect(center=self.rect.center)
 
 ###############################################################################
 
@@ -225,6 +228,7 @@ class dataConnection(Protocol):
             print('got my uid')
             self.space.setID(uID)
             self.space.main()
+            return None
         self.space.updateDisplay(data)
 
     def sendData(self, data):

@@ -28,17 +28,18 @@ def load_image(name):
 class GameSpace:
     def __init__(self):
         self.eventQueue = Queue.Queue()
-        self.players = []
+        self.players = {}
         self.projectiles = []
         self.asteroidCount = 0
         self.clients = {}
+        # player = Player(0, 100, 100, 0, 0)
+        # self.players[0] = player
+
 
     def addClient(self, clientList, pID):
-        print("client joined")
         self.clients = clientList
-        print(self.clients)
-        player = Player(pID, 100, 100, 0, 0)
-        self.players.append(player)
+        player = Player(int(pID), 100, 100, 0, 0)
+        self.players[int(pID)] = player
 
     def main(self):
         gameLoop = LoopingCall(self.loop)
@@ -62,16 +63,20 @@ class GameSpace:
                 projectile.update()
 
         if self.asteroidCount < 1:
-            asteroid = Projectile(0, 0, 1, 1, 'a')
+            asteroid = Projectile(300, 0, 300, 1, 'a')
             self.projectiles.append(asteroid)
             self.asteroidCount += 1
 
         # for items in game check collisions
-        # for objectOne in self.players:
-        #     for objectTwo in self.projectiles:
-        #         objectOne.checkCollision(objectTwo)
-
         destroyed= []
+        for players, objectOne in self.players.items():
+            for objectTwo in self.projectiles:
+                if objectTwo.parent != objectOne:
+                    temp = objectOne.checkCollision(objectTwo)
+                    if temp == True:
+                        destroyed.append(objectOne)
+                        destroyed.append(objectTwo)
+
         for objectOne in self.projectiles:
             if objectOne not in destroyed:
                 for objectTwo in self.projectiles:
@@ -85,12 +90,15 @@ class GameSpace:
                             if objectOne.pType == 'a' or objectTwo.pType == 'a':
                                 self.asteroidCount -= 1
 
-        for projectile in destroyed:
-            self.projectiles.remove(projectile)
+        for item in destroyed:
+            if item in self.projectiles:
+                self.projectiles.remove(item)
+            else:
+                del self.players[item.pId]
 
         # get object coords -> concat to one big string
         objectString = ""
-        for player in self.players:
+        for temp, player in self.players.items():
             playerString = str(player.pId) + ':' + str(player.X) + ':' + str(player.Y) + ':' + str(player.mX) + ':' + str(player.mY) + ';'
             objectString += playerString
 
@@ -118,10 +126,12 @@ class GameSpace:
         shoot = data[3]
         # print(shoot)
 
+        print(pId)
+        # print(self.players)
         self.players[pId].updatePos(int(pPos[0]), int(pPos[1]))
         self.players[pId].updateMouse(int(mPos[0]), int(mPos[1]))
 
-        if shoot == 'True0':
+        if 'True' in shoot:
             # print("player fired")
             return self.players[pId].fire(int(mPos[0]), int(mPos[1]))
 
@@ -140,6 +150,7 @@ class Player(pygame.sprite.Sprite):
         self.mY = mY
 
         self.image = load_image('assets/player.png')
+        self.image = pygame.transform.scale(self.image, (75, 75))
         self.rect = self.image.get_rect()
 
     def updatePos(self, newX, newY):
@@ -151,7 +162,7 @@ class Player(pygame.sprite.Sprite):
         self.mY = newY
 
     def fire(self, targetX, targetY):
-        newLaser = Projectile(self.X, self.Y, targetX, targetY, 'laser')
+        newLaser = Projectile(self.X, self.Y, targetX, targetY, 'laser', self)
         newLaser.setRotation(targetX, targetY)
         return newLaser
 
@@ -161,9 +172,11 @@ class Player(pygame.sprite.Sprite):
         return False
 
 class Projectile(pygame.sprite.Sprite):
-    def __init__(self, X, Y, targetX, targetY, pType):
+    def __init__(self, X, Y, targetX, targetY, pType, parent=None):
         self.speed = 0
         self.pType = 'a'
+
+        self.parent = parent
 
         pygame.sprite.Sprite.__init__(self)
 
