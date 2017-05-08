@@ -4,6 +4,7 @@ from twisted.internet import reactor
 from twisted.internet.defer import DeferredQueue
 from twisted.internet.task import LoopingCall
 
+from random import randint
 import pygame, math
 from pygame.locals import *
 from pygame.compat import geterror
@@ -41,8 +42,8 @@ class userSpace:
         self.laser = Sprite('l')
         self.asteroid = Sprite('a')
 
-        self.playerX = 100
-        self.playerY = 100
+        self.playerX = randint(75, 725)
+        self.playerY = randint(75, 525)
 
         self.info = ""
         self.pYou = ""
