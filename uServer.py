@@ -39,7 +39,7 @@ class GameSpace:
     def addClient(self, clientList, pID):
         self.clients = clientList
 
-        player = Player(int(pID), randint(75, 725) , randint(75, 525), 0, 0)
+        player = Player(int(pID), 100, 100, 0, 0)
         self.players[int(pID)] = player
 
     def main(self):
@@ -158,6 +158,8 @@ class Player(pygame.sprite.Sprite):
     def updatePos(self, newX, newY):
         self.X = newX
         self.Y = newY
+        self.rect.x = newX
+        self.rect.y = newY
 
     def updateMouse(self, newX, newY):
         self.mX = newX
