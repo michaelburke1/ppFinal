@@ -82,7 +82,7 @@ class GameSpace:
                 startY = 800
 
             #asteroid = Projectile(randint(75, 725), randint(75, 525), randint(75, 725), randint(75, 525), 'a')
-            asteroid = Projectile(startX, startY, randint(0, 1000), randint(0, 720), 'a')
+            asteroid = Projectile(startX, startY, randint(50, 950), randint(5, 670), 'a')
             self.projectiles.append(asteroid)
             self.asteroidCount += 1
 
@@ -106,7 +106,9 @@ class GameSpace:
                         if temp == True:
                             destroyed.append(objectOne)
                             destroyed.append(objectTwo)
-                            if objectOne.pType == 'a' or objectTwo.pType == 'a':
+                            if objectOne.pType == 'a':
+                                self.asteroidCount -= 1
+                            if objectTwo.pType == 'a':
                                 self.asteroidCount -= 1
 
         for item in destroyed:
@@ -138,7 +140,7 @@ class GameSpace:
 
     def parseEvent(self, eventString):
         data = eventString.split(';')
-        print(data)
+        # print(data)
         pId = int(data[0])
         pPos = data[1].split(',')
         mPos = data[2].split(',')
@@ -203,9 +205,9 @@ class Projectile(pygame.sprite.Sprite):
 
         if pType == "a":
             self.image = load_image('assets/Astroids/astroid.png')
-            self.image = pygame.transform.scale(self.image, (150, 150))
+            self.image = pygame.transform.scale(self.image, (120, 120))
             self.rect = self.image.get_rect()
-            self.speed = randint(1, 2)
+            self.speed = 2
             self.pType = 'a'
         else:
             self.image = load_image('assets/Effects/blueLaser.png')
