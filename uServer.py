@@ -38,7 +38,8 @@ class GameSpace:
 
     def addClient(self, clientList, pID):
         self.clients = clientList
-        player = Player(int(pID), 100, 100, 0, 0)
+
+        player = Player(int(pID), randint(75, 725) , randint(75, 525), 0, 0)
         self.players[int(pID)] = player
 
     def main(self):
@@ -63,7 +64,8 @@ class GameSpace:
                 projectile.update()
 
         if self.asteroidCount < 1:
-            asteroid = Projectile(300, 0, 300, 1, 'a')
+            #asteroid = Projectile(300, 0, 300, 1, 'a')
+            asteroid = Projectile(randint(75, 725), randint(75, 525), randint(75, 725), randint(75, 525), 'a')
             self.projectiles.append(asteroid)
             self.asteroidCount += 1
 
