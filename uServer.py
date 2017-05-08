@@ -65,7 +65,24 @@ class GameSpace:
 
         if self.asteroidCount < 1:
             #asteroid = Projectile(300, 0, 300, 1, 'a')
-            asteroid = Projectile(randint(75, 725), randint(75, 525), randint(75, 725), randint(75, 525), 'a')
+
+            side = randint(1,4)
+
+            if side == 0:
+                startX = 0
+                startY = randint(0, 525)
+            elif side == 1:
+                startX = 800
+                startY = randint(0, 525)
+            elif side == 2:
+                startX = randint(0, 725)
+                startY = 0
+            else:
+                startX = randint(0, 725)
+                startY = 600
+
+            #asteroid = Projectile(randint(75, 725), randint(75, 525), randint(75, 725), randint(75, 525), 'a')
+            asteroid = Projectile(startX, startY, randint(0, 800), randint(0, 600), 'a')
             self.projectiles.append(asteroid)
             self.asteroidCount += 1
 
