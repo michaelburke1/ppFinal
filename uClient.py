@@ -28,7 +28,7 @@ class userSpace:
     def __init__(self, connection):
         self.conn = connection
         pygame.init()
-        self.size = self.width, self.height = 800, 600
+        self.size = self.width, self.height = 1000, 720
         self.black = 0, 0, 0
         self.screen = pygame.display.set_mode(self.size)
 
@@ -182,7 +182,7 @@ class Sprite(pygame.sprite.Sprite):
 
         if sType == 'a':
             self.image, self.rect = load_image('assets/Astroids/astroid.png')
-            self.image = pygame.transform.scale(self.image, (75, 75))
+            self.image = pygame.transform.scale(self.image, (150, 150))
         elif sType == 'l':
             self.image, self.rect = load_image('assets/Effects/blueLaser.png')
             self.image = pygame.transform.scale(self.image, (30, 30))

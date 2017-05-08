@@ -56,33 +56,33 @@ class GameSpace:
                 self.projectiles.append(laser)
 
         for projectile in self.projectiles:
-            if projectile.rect.x > 650 or projectile.rect.y > 850 or projectile.rect.x < -50 or projectile.rect.y < -50:
+            if projectile.rect.centerx > 1001 or projectile.rect.centery > 721 or projectile.rect.centerx < -1 or projectile.rect.centery < -1:
                 self.projectiles.remove(projectile)
                 if projectile.pType == 'a':
                     self.asteroidCount -= 1
             else:
                 projectile.update()
 
-        if self.asteroidCount < 1:
+        if self.asteroidCount < 2:
             #asteroid = Projectile(300, 0, 300, 1, 'a')
 
             side = randint(1,4)
 
             if side == 0:
                 startX = 0
-                startY = randint(0, 525)
+                startY = randint(0, 800)
             elif side == 1:
-                startX = 800
-                startY = randint(0, 525)
+                startX = 1000
+                startY = randint(0, 800)
             elif side == 2:
-                startX = randint(0, 725)
+                startX = randint(0, 1000)
                 startY = 0
             else:
-                startX = randint(0, 725)
-                startY = 600
+                startX = randint(0, 1000)
+                startY = 800
 
             #asteroid = Projectile(randint(75, 725), randint(75, 525), randint(75, 725), randint(75, 525), 'a')
-            asteroid = Projectile(startX, startY, randint(0, 800), randint(0, 600), 'a')
+            asteroid = Projectile(startX, startY, randint(0, 1000), randint(0, 720), 'a')
             self.projectiles.append(asteroid)
             self.asteroidCount += 1
 
@@ -203,9 +203,9 @@ class Projectile(pygame.sprite.Sprite):
 
         if pType == "a":
             self.image = load_image('assets/Astroids/astroid.png')
-            self.image = pygame.transform.scale(self.image, (75, 75))
+            self.image = pygame.transform.scale(self.image, (150, 150))
             self.rect = self.image.get_rect()
-            self.speed = randint(2, 4)
+            self.speed = randint(1, 2)
             self.pType = 'a'
         else:
             self.image = load_image('assets/Effects/blueLaser.png')
@@ -214,8 +214,8 @@ class Projectile(pygame.sprite.Sprite):
             self.speed = 10
             self.pType = 'l'
 
-        self.rect.x = X + 30
-        self.rect.y = Y + 30
+        self.rect.centerx = X + 30
+        self.rect.centery = Y + 30
 
         self.rotAngle = 0
 
@@ -224,8 +224,8 @@ class Projectile(pygame.sprite.Sprite):
         self.direction = [distance[0] / norm, distance[1] / norm]
 
     def update(self):
-        self.rect.x += (self.direction[0] * self.speed)
-        self.rect.y += (self.direction[1] * self.speed)
+        self.rect.centerx += (self.direction[0] * self.speed)
+        self.rect.centery += (self.direction[1] * self.speed)
 
     def setRotation(self, X, Y):
         rotAngle = math.atan2(self.rect.y - Y, X-self.rect.x)
