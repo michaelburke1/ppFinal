@@ -17,4 +17,9 @@ Once running, a user can run:
 
 to join the action. 
 
-Hit Control-C to exit the game from the uClient.py window.  
+Hit Control-C to exit the game from the uClient.py window. 
+
+
+
+We have tested the project locally and it runs very smoothly. However, on ASH, it lags alot 
+and does not play well at all. We have tested it fully on Linux and it runs and looks great.  
