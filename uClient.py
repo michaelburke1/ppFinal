@@ -182,7 +182,7 @@ class Sprite(pygame.sprite.Sprite):
 
         if sType == 'a':
             self.image, self.rect = load_image('assets/Astroids/astroid.png')
-            self.image = pygame.transform.scale(self.image, (150, 150))
+            self.image = pygame.transform.scale(self.image, (200, 200))
         elif sType == 'l':
             self.image, self.rect = load_image('assets/Effects/blueLaser.png')
             self.image = pygame.transform.scale(self.image, (30, 30))

@@ -63,26 +63,27 @@ class GameSpace:
             else:
                 projectile.update()
 
-        if self.asteroidCount < 2:
-            #asteroid = Projectile(300, 0, 300, 1, 'a')
+        if self.asteroidCount < 1:
 
             side = randint(1,4)
 
             if side == 0:
                 startX = 0
-                startY = randint(0, 800)
+                startY = randint(0, 690)
             elif side == 1:
-                startX = 1000
-                startY = randint(0, 800)
+                startX = 970
+                startY = randint(0, 690)
             elif side == 2:
-                startX = randint(0, 1000)
+                startX = randint(0, 970)
                 startY = 0
             else:
-                startX = randint(0, 1000)
-                startY = 800
+                startX = randint(0, 970)
+                startY = 690
 
-            #asteroid = Projectile(randint(75, 725), randint(75, 525), randint(75, 725), randint(75, 525), 'a')
-            asteroid = Projectile(startX, startY, randint(50, 950), randint(5, 670), 'a')
+            endX = randint(300, 700)
+            endY = randint(200, 600)
+            asteroid = Projectile(startX, startY, endX, endY, 'a')
+            print('asteroid started at:' + str(startX) + ',' + str(startY) +' and headed ' + str(endX) + ',' + str(endY))
             self.projectiles.append(asteroid)
             self.asteroidCount += 1
 
@@ -93,8 +94,11 @@ class GameSpace:
                 if objectTwo.parent != objectOne:
                     temp = objectOne.checkCollision(objectTwo)
                     if temp == True:
-                        destroyed.append(objectOne)
+                        # destroyed.append(objectOne)
+                        objectOne.dead = True
                         destroyed.append(objectTwo)
+                        if objectTwo.pType == 'a':
+                            self.asteroidCount -= 1
 
         explosionString = ""
         for objectOne in self.projectiles:
@@ -105,8 +109,8 @@ class GameSpace:
                         if objectOne != objectTwo:
                             temp = objectOne.checkCollision(objectTwo)
                         if temp == True:
-                            expX = objectOne.X + objectTwo.X / 2
-                            expY = objectOne.Y + objectTwo.y / 2
+                            expX = objectOne.rect.centerx + objectTwo.rect.centerx / 2
+                            expY = objectOne.rect.centery + objectTwo.rect.centery / 2
                             explosionString = "x" + str(expX) + ":" + str(expY) + ":" + "0:0;"
                             destroyed.append(objectOne)
                             destroyed.append(objectTwo)
@@ -124,15 +128,16 @@ class GameSpace:
         # get object coords -> concat to one big string
         objectString = ""
         for temp, player in self.players.items():
-            playerString = str(player.pId) + ':' + str(player.X) + ':' + str(player.Y) + ':' + str(player.mX) + ':' + str(player.mY) + ';'
-            objectString += playerString
+            if player.dead == False:
+                playerString = str(player.pId) + ':' + str(player.X) + ':' + str(player.Y) + ':' + str(player.mX) + ':' + str(player.mY) + ';'
+                objectString += playerString
 
         objectString += '#'
 
         for projectile in self.projectiles:
             projectileString = projectile.pType + ':' + str(projectile.rect.x) + ':' + str(projectile.rect.y) + ':' + str(projectile.rotAngle) + ';'
             objectString += projectileString
-        objectString += explosionString 
+        objectString += explosionString
 
         # send string to every client
         # print(objectString)
@@ -158,8 +163,10 @@ class GameSpace:
         self.players[pId].updateMouse(int(mPos[0]), int(mPos[1]))
 
         if 'True' in shoot:
-            # print("player fired")
-            return self.players[pId].fire(int(mPos[0]), int(mPos[1]))
+            if self.players[pId].dead == True:
+                self.players[pId].dead = False
+            else:
+                return self.players[pId].fire(int(mPos[0]), int(mPos[1]))
 
         return None
 
@@ -174,6 +181,8 @@ class Player(pygame.sprite.Sprite):
 
         self.mX = mX
         self.mY = mY
+
+        self.dead = False
 
         self.image = load_image('assets/player.png')
         self.image = pygame.transform.scale(self.image, (75, 75))
