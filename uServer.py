@@ -96,6 +96,7 @@ class GameSpace:
                         destroyed.append(objectOne)
                         destroyed.append(objectTwo)
 
+        explosionString = ""
         for objectOne in self.projectiles:
             if objectOne not in destroyed:
                 for objectTwo in self.projectiles:
@@ -104,6 +105,9 @@ class GameSpace:
                         if objectOne != objectTwo:
                             temp = objectOne.checkCollision(objectTwo)
                         if temp == True:
+                            expX = objectOne.X + objectTwo.X / 2
+                            expY = objectOne.Y + objectTwo.y / 2
+                            explosionString = "x" + str(expX) + ":" + str(expY) + ":" + "0:0;"
                             destroyed.append(objectOne)
                             destroyed.append(objectTwo)
                             if objectOne.pType == 'a':
@@ -128,6 +132,7 @@ class GameSpace:
         for projectile in self.projectiles:
             projectileString = projectile.pType + ':' + str(projectile.rect.x) + ':' + str(projectile.rect.y) + ':' + str(projectile.rotAngle) + ';'
             objectString += projectileString
+        objectString += explosionString 
 
         # send string to every client
         # print(objectString)
