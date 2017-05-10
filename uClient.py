@@ -34,7 +34,6 @@ class userSpace:
 
         self.players = []
         self.projectiles = []
-        self.explosions = []
 
         self.uID = 0
 
@@ -42,7 +41,6 @@ class userSpace:
         self.enemy = Sprite('e')
         self.laser = Sprite('l')
         self.asteroid = Sprite('a')
-        self.explosion = Explosion
 
         self.playerX = randint(75, 725)
         self.playerY = randint(75, 525)
@@ -150,14 +148,6 @@ class userSpace:
                 self.laser.setPosition(projectile[1], projectile[2])
                 self.laser.setRotation(projectile[3])
                 self.screen.blit(self.laser.image, self.laser.rect)
-            if projectile[0] == 'x':
-                self.explosions.append(Explosion((projectile[1], projectile[2]), 50))
-                for explosion in self.explosions:
-                    if explosion.frame == 16:
-                        self.explosions.remove(explosion)
-                    else:
-                        explosion.update()
-                        self.screen.blit(explosion.image, explosion.rect)
 
         for player in self.players:
             if player[0] == 'p':
@@ -208,42 +198,6 @@ class Sprite(pygame.sprite.Sprite):
 
         self.image = pygame.transform.rotate(self.unrotatedImage, rotAngle)
         self.rect = self.image.get_rect(center=self.rect.center)
-
-class Explosion(pygame.sprite.Sprite):
-    def __init__(self, center, size):
-        pygame.sprite.Sprite.__init__(self)
-        self.size = size
-        self.frame = 0
-
-        self.loadFiles()
-
-        self.image = self.explosion_anim[0]
-        self.rect = self.image.get_rect()
-        self.rect.center = center
-        self.rect.y -= 100
-        self.rect.y -= 100
-
-    def loadFiles(self):
-        self.explosion_anim = []
-        for i in range(15):
-            i+=1
-            filename = 'assets/Effects/Red_Ex/1_' + str(i) + '.png'
-            img = pygame.image.load(filename).convert()
-            img.convert_alpha()
-            img_lg = pygame.transform.scale(img, (250, 250))
-            self.explosion_anim.append(img_lg)
-
-    def update(self):
-        self.frame += 1
-        if self.frame == len(self.explosion_anim):
-            return False
-        else:
-            center = self.rect.center
-            self.image = self.explosion_anim[self.frame]
-            self.rect = self.image.get_rect()
-            self.rect.center = center
-
-        return True
 
 ###############################################################################
 
